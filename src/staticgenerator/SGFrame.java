@@ -4,8 +4,20 @@
  */
 package staticgenerator;
 
+import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.imageio.ImageIO;
+import javax.swing.JFileChooser;
 import mathnstuff.components.ImagePanel;
 
 /**
@@ -40,6 +52,8 @@ public class SGFrame extends javax.swing.JFrame {
         btnGenerate = new javax.swing.JButton();
         spinScale = new javax.swing.JSpinner();
         jLabel1 = new javax.swing.JLabel();
+        btnToClip = new javax.swing.JButton();
+        btnToFile = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -58,18 +72,36 @@ public class SGFrame extends javax.swing.JFrame {
 
         jLabel1.setText("Scale");
 
+        btnToClip.setText("To Clipboard");
+        btnToClip.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnToClipActionPerformed(evt);
+            }
+        });
+
+        btnToFile.setText("To PNG");
+        btnToFile.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnToFileActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
-                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                    .add(cbPalette, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .add(btnGenerate)
-                    .add(spinScale))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jLabel1)
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(jPanel1Layout.createSequentialGroup()
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                            .add(cbPalette, 0, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .add(btnGenerate)
+                            .add(spinScale))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jLabel1))
+                    .add(btnToClip)
+                    .add(btnToFile))
                 .addContainerGap(38, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -81,7 +113,11 @@ public class SGFrame extends javax.swing.JFrame {
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                     .add(spinScale, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel1))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 264, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 194, Short.MAX_VALUE)
+                .add(btnToFile)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(btnToClip)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(btnGenerate)
                 .addContainerGap())
         );
@@ -96,7 +132,7 @@ public class SGFrame extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jSplitPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 370, Short.MAX_VALUE)
+            .add(jSplitPane1)
         );
 
         pack();
@@ -158,6 +194,75 @@ public class SGFrame extends javax.swing.JFrame {
         }
     }
     
+    private void btnToClipActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnToClipActionPerformed
+        if (ipImage.getImage() != null) {
+            writeToClipboard(ipImage.getImage());
+        }
+    }//GEN-LAST:event_btnToClipActionPerformed
+
+    private JFileChooser fileChooser = new JFileChooser();
+    
+    private void btnToFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnToFileActionPerformed
+        if (ipImage.getImage() != null) {
+            if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+                File file = fileChooser.getSelectedFile();
+                BufferedImage bi = (BufferedImage)ipImage.getImage();
+                try {
+                    ImageIO.write(bi, "png", file);
+                } catch (IOException ex) {
+                    Logger.getLogger(SGFrame.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+    }//GEN-LAST:event_btnToFileActionPerformed
+
+    /**
+     * Copies an image to the clipboard.
+     * Copied from http://stackoverflow.com/questions/7834768/setting-images-to-clipboard-java
+     * @param image 
+     */
+    public static void writeToClipboard(Image image)
+    {
+        if (image == null)
+            throw new IllegalArgumentException ("Image can't be null");
+
+        ImageTransferable transferable = new ImageTransferable( image );
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(transferable, null);
+    }
+
+    static class ImageTransferable implements Transferable
+    {
+        private Image image;
+
+        public ImageTransferable (Image image)
+        {
+            this.image = image;
+        }
+
+        public Object getTransferData(DataFlavor flavor)
+            throws UnsupportedFlavorException
+        {
+            if (isDataFlavorSupported(flavor))
+            {
+                return image;
+            }
+            else
+            {
+                throw new UnsupportedFlavorException(flavor);
+            }
+        }
+
+        public boolean isDataFlavorSupported (DataFlavor flavor)
+        {
+            return flavor == DataFlavor.imageFlavor;
+        }
+
+        public DataFlavor[] getTransferDataFlavors ()
+        {
+            return new DataFlavor[] { DataFlavor.imageFlavor };
+        }
+    }
+    
     /**
      * @param args the command line arguments
      */
@@ -194,6 +299,8 @@ public class SGFrame extends javax.swing.JFrame {
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnGenerate;
+    private javax.swing.JButton btnToClip;
+    private javax.swing.JButton btnToFile;
     private javax.swing.JComboBox cbPalette;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JPanel jPanel1;
